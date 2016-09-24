@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import sys, threading
 from socket import *
 
@@ -54,33 +53,40 @@ def getRequestMethod(httpRequestString):
 	requestMethodLineSplit = requestMethodLine.split()
 	return requestMethodLineSplit[0]
 
-def handleHTTPRequest(httpRequestString):
+def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
+	host = 'stackoverflow.com'
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 	requestMethod = getRequestMethod(httpRequestString)
 	if (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-		return 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
+		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
+	elif (host in websitesToBlock):
+		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
 	else:
-		return 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
+		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
+	return proxyHTTPResponse
 
-# A requestThread object is a 2-tuple comprised
-# of a connectionSocket and an address.
+# A requestThread object is a 3-tuple comprised
+# of a connectionSocket, an address, and a list 
+# of websites to block read from proxy_config.
 # 
 # When a requestThread object is run, it will
 # accept a HTTP request from a client and run
-# handleHTTPRequest(clientHTTPRequestString)
+# handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 class requestThread (threading.Thread):
-	def __init__(self, connectionSocket, addr):
+	def __init__(self, connectionSocket, addr, websitesToBlock):
 		threading.Thread.__init__(self)
 		self.connectionSocket = connectionSocket
 		self.addr = addr
+		self.websitesToBlock = websitesToBlock
 	def run(self):
 		ipAddressPortNumber = self.addr[0]+':'+str(self.addr[1])
 		print 'TCP connection opened with: '+ipAddressPortNumber
 #		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
 		clientHTTPRequestString = self.connectionSocket.recv(1024)
-		messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString)
+		print clientHTTPRequestString
+		messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
 		print 'TCP connection closed with: '+ipAddressPortNumber #+'. '+httpResponseSentString
@@ -114,7 +120,7 @@ def main():
 			while True:
 				connectionSocket, addr = serverSocket.accept()
 				# start a new thread and pass connectionSocket and addr
-				requestThread(connectionSocket, addr).start()
+				requestThread(connectionSocket, addr, websitesToBlock).start()
 		except KeyboardInterrupt:
 			print '\nServer '+gethostname()+' listening on port '+serverPortString+' stopped with ctl+c'
 	else:
