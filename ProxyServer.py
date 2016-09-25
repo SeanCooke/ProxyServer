@@ -43,21 +43,44 @@ def listToHTMLul(pythonList):
 		htmlUL+='<li>'+str(pythonListElement)+'</li>'
 	return htmlUL+'</ul>'
 
-# getRequestMethod takes a HTTP request as a parameter and
-# returns the requested HTTP method (i.e. GET, POST, HEAD)
-def getRequestMethod(httpRequestString):
+# headerListToHeaderDict takes a list of HTML headers as a parameter and returns
+# a dictionary containing the HTML headers in name/value pairs
+#
+# i.e. headerListToHeaderDict(['Host: www.campustry.com', 'Connection: keep-alive'])
+# returns {'Host': 'www.campustry.com', 'Connection': 'keep-alive'}
+def headerListToHeaderDict(headerList):
+	headerDict = dict()
+	for headerListElement in headerList:
+		if headerListElement != '':
+			headerListElementSplit = headerListElement.split(':', 1)
+			key = headerListElementSplit[0].strip()
+			value = headerListElementSplit[1].strip()
+			headerDict[key] = value
+	return headerDict
+
+# parseHTTPRequestString takes a string representaiton of a HTTP request and
+# returns three values:
+# 1. The request method
+# 2. The requestd hostname and file
+# 3. A dictionary of all HTTP request headers
+def parseHTTPRequestString(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
-	headers = httpRequestString.splitlines()
+	headers = clientHTTPRequestString.splitlines()
 	# The first line is of the form '[REQUEST_METHOD] [REQUESTED_FILE] [HTTP_VERSION]'
 	requestMethodLine = headers[0]
+	# All remaining lines of the HTTP request are headers
+	headers.remove(requestMethodLine)
 	requestMethodLineSplit = requestMethodLine.split()
-	return requestMethodLineSplit[0]
+	requestMethod = requestMethodLineSplit[0]
+	requestHostFile = requestMethodLineSplit[1]
+	return requestMethod, requestHostFile, headerListToHeaderDict(headers)
 
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
 	host = 'stackoverflow.com'
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-	requestMethod = getRequestMethod(httpRequestString)
+	requestMethod, requestHostFile, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
+	host = httpRequestHeaders['Host']
 	if (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
@@ -65,7 +88,7 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
 	else:
 		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
-	return proxyHTTPResponse
+	return requestHostFile, proxyHTTPResponse
 
 # A requestThread object is a 3-tuple comprised
 # of a connectionSocket, an address, and a list 
@@ -83,13 +106,13 @@ class requestThread (threading.Thread):
 	def run(self):
 		ipAddressPortNumber = self.addr[0]+':'+str(self.addr[1])
 		print 'TCP connection opened with: '+ipAddressPortNumber
-#		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
+		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
 		clientHTTPRequestString = self.connectionSocket.recv(1024)
-		print clientHTTPRequestString
-		messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
+		requestHostFile, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
+		httpResponseSentString = 'Sent '+requestHostFile
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
-		print 'TCP connection closed with: '+ipAddressPortNumber #+'. '+httpResponseSentString
+		print 'TCP connection closed with: '+ipAddressPortNumber+'. '+httpResponseSentString
 
 # main() will create TCP connections with connected
 # clients.  Concurrent connections will be accepted.
