@@ -84,11 +84,15 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	if (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
+		httpResponseSentString = 'No request sent to server. Request method other than '+str(supportedHTTPMethods)+' requested.'
 	elif (host in websitesToBlock):
 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
+		httpResponseSentString = 'No request sent to server. Request method other than '+str(supportedHTTPMethods)+' requested.'
+		# httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
 	else:
 		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
-	return requestHostFile, proxyHTTPResponse
+		httpResponseSentString = 'Sent '+requestHostFile
+	return httpResponseSentString, proxyHTTPResponse
 
 # A requestThread object is a 3-tuple comprised
 # of a connectionSocket, an address, and a list 
@@ -108,8 +112,7 @@ class requestThread (threading.Thread):
 		print 'TCP connection opened with: '+ipAddressPortNumber
 		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
 		clientHTTPRequestString = self.connectionSocket.recv(1024)
-		requestHostFile, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
-		httpResponseSentString = 'Sent '+requestHostFile
+		httpResponseSentString, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
 		print 'TCP connection closed with: '+ipAddressPortNumber+'. '+httpResponseSentString
