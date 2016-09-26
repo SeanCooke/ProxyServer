@@ -9,7 +9,7 @@ from socket import *
 #        if multiple values are specified as 'port', the final value will be used)
 # 2. a list containing all values specified as 'block' from pathToFile
 #
-# Comments in pathToFile are denoted with # and extend to the end of the line
+# Comments in pathToFile are denoted with # and extend to the end of the line.
 def readConfig(pathToFile):
 	commentCharacter = '#'
 	port = 80
@@ -102,6 +102,13 @@ def parseHTTPRequestString(clientHTTPRequestString):
 	requestHostFile = requestMethodLineSplit[1]
 	return requestMethod, requestHostFile, headerListToHeaderDict(headers)
 
+# handleHTTPRequest takes the HTTP request [httpRequestString] and a python list of 
+# websites to block [websitesToBlock] and returns the HTTP response from the host
+# specified in [httpRequestString].
+#
+# A HTTP 400 Bad Request error occurs if an unsupported method request occurs
+# A HTTP 403 Forbidden error occurs if the host specified in [httpRequestString].
+# is in [websitesToBlock]
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
@@ -123,7 +130,6 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
 		proxyHTTPResponse = clientSocket.recv(1024)
 		clientSocket.close()
-		# proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
 		httpResponseSentString = 'Sent '+requestHostFile
 	return httpResponseSentString, proxyHTTPResponse
 
@@ -185,5 +191,5 @@ def main():
 	else:
 		print 'ERROR: Invalid number of arguments'
 
-# commmand must be of form "./ProxyConfig [locationOfConfig]"
+# commmand must be of form "./ProxyConfig [locationOfConfig]".
 main()
