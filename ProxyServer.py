@@ -43,6 +43,30 @@ def listToHTMLul(pythonList):
 		htmlUL+='<li>'+str(pythonListElement)+'</li>'
 	return htmlUL+'</ul>'
 
+# listToSpokenList takes a list as a parameter and returns
+# the written description of the elements in the list.
+#
+# i.e. myList = [] returns ''
+# myList = ['GET'] returns 'GET'
+# myList = ['GET', 'POST'] returns 'GET and POST'
+# myList = ['GET', 'POST', 'HEAD'] returns 'GET, POST, and HEAD'
+def listToSpokenList(pythonList):
+	pythonListIndex = 0
+	pythonListLastElementIndex = len(pythonList)-1
+	spokenList = ''
+	andCharacter = ', and '
+	for pythonListElement in pythonList:
+		if pythonListIndex == 0:
+			spokenList = pythonList[pythonListIndex]
+		elif pythonListIndex == pythonListLastElementIndex:
+			if len(pythonList) == 2:
+				andCharacter = ' and '
+			spokenList = spokenList+andCharacter+pythonList[pythonListIndex]
+		else:
+			spokenList = spokenList+', '+pythonList[pythonListIndex]
+		pythonListIndex+=1
+	return spokenList.rstrip()
+
 # headerListToHeaderDict takes a list of HTML headers as a parameter and returns
 # a dictionary containing the HTML headers in name/value pairs
 #
@@ -84,11 +108,10 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	if (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
-		httpResponseSentString = 'No request sent to server. Request method other than '+str(supportedHTTPMethods)+' requested.'
+		httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
 	elif (host in websitesToBlock):
 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
-		httpResponseSentString = 'No request sent to server. Request method other than '+str(supportedHTTPMethods)+' requested.'
-		# httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
+		httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
 	else:
 		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
 		httpResponseSentString = 'Sent '+requestHostFile
@@ -112,6 +135,9 @@ class requestThread (threading.Thread):
 		print 'TCP connection opened with: '+ipAddressPortNumber
 		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
 		clientHTTPRequestString = self.connectionSocket.recv(1024)
+		print '******************************'
+		print clientHTTPRequestString
+		print '******************************'
 		httpResponseSentString, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
