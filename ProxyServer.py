@@ -78,7 +78,10 @@ def headerListToHeaderDict(headerList):
 		if headerListElement != '':
 			headerListElementSplit = headerListElement.split(':', 1)
 			key = headerListElementSplit[0].strip()
-			value = headerListElementSplit[1].strip()
+			try:
+				value = headerListElementSplit[1].strip()
+			except IndexError:
+				value = ''	
 			headerDict[key] = value
 	return headerDict
 
@@ -101,7 +104,6 @@ def parseHTTPRequestString(clientHTTPRequestString):
 
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
-	host = 'stackoverflow.com'
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 	requestMethod, requestHostFile, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 	host = httpRequestHeaders['Host']
@@ -113,7 +115,15 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
 		httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
 	else:
-		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
+		# open TCP connection with [host] on port 80
+		clientSocket = socket(AF_INET, SOCK_STREAM)
+		clientSocket.connect((host, 80))
+		# sending the [httpRequestString] that was sent to the proxy to [host]
+		clientSocket.send(httpRequestString)
+		# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
+		proxyHTTPResponse = clientSocket.recv(1024)
+		clientSocket.close()
+		# proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP/1.1 200 OK</h1></body></html>'
 		httpResponseSentString = 'Sent '+requestHostFile
 	return httpResponseSentString, proxyHTTPResponse
 
@@ -135,9 +145,6 @@ class requestThread (threading.Thread):
 		print 'TCP connection opened with: '+ipAddressPortNumber
 		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
 		clientHTTPRequestString = self.connectionSocket.recv(1024)
-		print '******************************'
-		print clientHTTPRequestString
-		print '******************************'
 		httpResponseSentString, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
