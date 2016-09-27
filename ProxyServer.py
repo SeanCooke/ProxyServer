@@ -77,7 +77,10 @@ def headerListToHeaderDict(headerList):
 	for headerListElement in headerList:
 		if headerListElement != '':
 			headerListElementSplit = headerListElement.split(':', 1)
-			key = headerListElementSplit[0].strip()
+			try:
+				key = headerListElementSplit[0].strip()
+			except IndexError:
+				key = ''
 			try:
 				value = headerListElementSplit[1].strip()
 			except IndexError:
@@ -114,6 +117,9 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 	requestMethod, requestHostFile, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 	host = httpRequestHeaders['Host']
+	print '*****'
+	print httpRequestHeaders['Connection']
+	print '*****'
 	if (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
@@ -187,7 +193,7 @@ def main():
 				# start a new thread and pass connectionSocket and addr
 				requestThread(connectionSocket, addr, websitesToBlock).start()
 		except KeyboardInterrupt:
-			print '\nServer '+gethostname()+' listening on port '+serverPortString+' stopped with ctl+c'
+			print '\nServer '+gethostname()+' listening on port '+serverPortString+' stopped with a keyboard interrupt.'
 	else:
 		print 'ERROR: Invalid number of arguments'
 
