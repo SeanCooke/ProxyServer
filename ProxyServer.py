@@ -120,7 +120,10 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	print '*****'
 	print httpRequestHeaders['Connection']
 	print '*****'
-	if (requestMethod not in  supportedHTTPMethods):
+	if (requestMethod == 'QUIT'):
+		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP 200 OK</h1>Your \'QUIT\' request has shut down ProxyServer.</body></html>'
+		httpResponseSentString = 'No request sent to server. QUIT request issued.'
+	elif (requestMethod not in  supportedHTTPMethods):
 		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
 		httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
