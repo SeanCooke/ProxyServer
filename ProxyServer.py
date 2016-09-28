@@ -31,6 +31,15 @@ def readConfig(pathToFile):
 			line = config.readline()
 	return int(port), websitesToBlock
 
+# preventPersistantConnections prevents persistant HTTP connections
+# by explicitly setting the connection to be closed
+def preventPersistantConnections(requestMethodLine, httpRequestHeaders):
+	httpRequest = requestMethodLine
+	httpRequestHeaders['Connection'] = 'close'
+	for key, value in httpRequestHeaders.iteritems():
+		 httpRequest+='\n'+key+': '+value
+	return httpRequest+'\n\n'
+
 # listToHTMLul takes a list [pythonList] as a parameter
 # and returns the string representation of [pythonList]
 # as an unordered HTML list.
@@ -89,9 +98,10 @@ def headerListToHeaderDict(headerList):
 	return headerDict
 
 # parseHTTPRequestString takes a string representaiton of a HTTP request and
-# returns three values:
+# returns four values:
 # 1. The request method
-# 2. The requestd hostname and file
+# 2. The requested hostname and file
+# 3. The first line of the HTTP request
 # 3. A dictionary of all HTTP request headers
 def parseHTTPRequestString(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
@@ -103,7 +113,7 @@ def parseHTTPRequestString(clientHTTPRequestString):
 	requestMethodLineSplit = requestMethodLine.split()
 	requestMethod = requestMethodLineSplit[0]
 	requestHostFile = requestMethodLineSplit[1]
-	return requestMethod, requestHostFile, headerListToHeaderDict(headers)
+	return requestMethod, requestHostFile, requestMethodLine, headerListToHeaderDict(headers)
 
 # handleHTTPRequest takes the HTTP request [httpRequestString] and a python list of 
 # websites to block [websitesToBlock] and returns the HTTP response from the host
@@ -115,11 +125,9 @@ def parseHTTPRequestString(clientHTTPRequestString):
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-	requestMethod, requestHostFile, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
+	requestMethod, requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 	host = httpRequestHeaders['Host']
-	print '*****'
-	print httpRequestHeaders['Connection']
-	print '*****'
+	# if the request method is QUIT, shut down the server
 	if (requestMethod == 'QUIT'):
 		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP 200 OK</h1>Your \'QUIT\' request has shut down ProxyServer.</body></html>'
 		httpResponseSentString = 'No request sent to server. QUIT request issued.'
@@ -128,14 +136,17 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
 		httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
 	elif (host in websitesToBlock):
-		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
-		httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
+# 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
+# 		httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
+		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP 200 OK</h1>Your \'QUIT\' request has shut down ProxyServer.</body></html>'
+		httpResponseSentString = 'No request sent to server. QUIT request issued.'
 	else:
 		# open TCP connection with [host] on port 80
 		clientSocket = socket(AF_INET, SOCK_STREAM)
 		clientSocket.connect((host, 80))
-		# sending the [httpRequestString] that was sent to the proxy to [host]
-		clientSocket.send(httpRequestString)
+		# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
+		closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
+		clientSocket.send(closedHTTPRequest)
 		# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
 		proxyHTTPResponse = clientSocket.recv(1024)
 		clientSocket.close()
