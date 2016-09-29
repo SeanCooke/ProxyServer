@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, threading
+import sys, threading, time
 from socket import *
 
 # readConfig reads the file specified in pathToFile
@@ -170,7 +170,10 @@ class requestThread (threading.Thread):
 		ipAddressPortNumber = self.addr[0]+':'+str(self.addr[1])
 		print 'TCP connection opened with: '+ipAddressPortNumber
 		httpResponseSentString = 'Connection closed by client before HTTP response sent.'
-		clientHTTPRequestString = self.connectionSocket.recv(1024)
+		clientHTTPRequestString = '***'
+		while clientHTTPRequestString[-3:] not in ['\n\n\n', '\n\n\r', '\n\r\n', '\n\r\r', '\r\n\n', '\r\n\r', '\r\r\n', '\r\r\r']:
+			clientHTTPRequestString += self.connectionSocket.recv(1024)
+		clientHTTPRequestString = clientHTTPRequestString[3:]
 		httpResponseSentString, messageFromProxyServer = handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 		self.connectionSocket.send(messageFromProxyServer)
 		self.connectionSocket.close()
