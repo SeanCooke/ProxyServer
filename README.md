@@ -30,8 +30,15 @@ ProxyServer can forward requested files over the Internet from servers to browse
     <enter>
 
 ProxyServer will block HTTP requests to hosts specified in the file `proxy_config`.  By default the host `stackoverflow.com` is blocked in `proxy_config`.  If we issue the request
+
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    <stuff>
+    GET / HTTP/1.1<enter>
+    Host: stackoverflow.com<enter>
+    <enter>
+
+We will recieve a HTTP 403 (Forbidden) response.
+
+ProxyServer only supports the HTTP GET request method over HTTP.  If we try to 
 
 ## The Config File
 On startup, the proxy server reads a config file (specified as the only argument to `ProxyServer`) to get the port number the server should be run on and a list of websites to be blocked by the proxy server.  Comments in the config file are denoted with a '#' and extend to the end of the line on which they appear.
