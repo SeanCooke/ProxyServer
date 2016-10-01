@@ -137,7 +137,7 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	requestMethod = getRequestMethod(httpRequestString)
 	# if the request method is QUIT, shut down the server
 	if requestMethod == 'QUIT':
-		print 'No request sent to server. QUIT request issued.'
+		print 'Shutting down ProxyServer...'
 		os._exit(1)
 	else:
 		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
