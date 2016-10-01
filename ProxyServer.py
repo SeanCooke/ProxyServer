@@ -3,13 +3,16 @@ import sys, threading, os
 from socket import *
 
 # readConfig reads the file specified in pathToFile
-# and returns two values:
-# 1. the value specified as 'port' from pathToFile.
+# Comments in pathToFile are denoted with # and extend to the end of the line.
+#
+# input arguments:
+# 1. pathToFile -  the path to a the config file
+#
+# return values:
+# 1. int(port) - the value specified as 'port' from pathToFile.
 # (note: if no values is specified as 'port', 80 will be used.
 #        if multiple values are specified as 'port', the final value will be used)
-# 2. a list containing all values specified as 'block' from pathToFile
-#
-# Comments in pathToFile are denoted with # and extend to the end of the line.
+# 2. websitesToBlock - a list containing all values specified as 'block' from pathToFile
 def readConfig(pathToFile):
 	commentCharacter = '#'
 	port = 80
@@ -33,6 +36,17 @@ def readConfig(pathToFile):
 
 # preventPersistantConnections prevents persistant HTTP connections
 # by explicitly setting the connection to be closed
+#
+# input arguments:
+# 1. requestMethodLine - the first line of the HTTP request as a string
+#						 i.e. "GET /about/software/editor.txt HTTP/1.1"
+# 2. httpRequestHeaders -  a python dictionary containing a list of all
+# 						   HTTP headers in name/value pairs
+#
+# return values:
+# 1. httpRequest+'\n\n' - a complete HTTP request concatinated from
+#						  requestMethodLine and httpRequestHeaders
+#						  with the header 'Connection: close'
 def preventPersistantConnections(requestMethodLine, httpRequestHeaders):
 	httpRequest = requestMethodLine
 	httpRequestHeaders['Connection'] = 'close'
@@ -46,6 +60,9 @@ def preventPersistantConnections(requestMethodLine, httpRequestHeaders):
 # 
 # i.e. [pythonList] = ['GET', 'POST']
 # returns: '<ul><li>GET</li><li>POST</li></ul>'
+#
+# input arguments:
+# pythonList - 
 def listToHTMLul(pythonList):
 	htmlUL = '<ul>'
 	for pythonListElement in pythonList:
@@ -156,8 +173,14 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
 			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
 			clientSocket.send(closedHTTPRequest)
-			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
-			proxyHTTPResponse = clientSocket.recv(1024)
+			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]
+			proxyHTTPResponse = ''
+			# recieve all data from the server in 1024 bytes
+			while True:
+				dataFromServer = clientSocket.recv(1024)
+				proxyHTTPResponse+=dataFromServer
+				if not dataFromServer:
+					break
 			clientSocket.close()
 			httpResponseSentString = 'Sent '+requestHostFile
 	return httpResponseSentString, proxyHTTPResponse
