@@ -45,6 +45,10 @@ ProxyServer only supports the HTTP GET request method over HTTP.  If we try to i
     Host: www.campustry.com<enter>
     <enter>
 
+We will recieve a HTTP 400 Bad Request response.
+
+To prevent persistant connections, ProxyServer adds the header `Connection: close` to all HTTP requests.
+
 ## The Config File
 On startup, the proxy server reads a config file (specified as the only argument to `ProxyServer`) to get the port number the server should be run on and a list of websites to be blocked by the proxy server.  Comments in the config file are denoted with a '#' and extend to the end of the line on which they appear.
 
