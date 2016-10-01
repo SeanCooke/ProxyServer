@@ -11,17 +11,17 @@ ProxyServer can forward requested files over the Internet from servers to browse
 ### Examples
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     GET /u/amosayye/ HTTP/1.1<enter>
-    Host: http://cs.rochester.edu<enter>
+    Host: cs.rochester.edu<enter>
     <enter>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     GET /about/software/editor.txt HTTP/1.1<enter>
-    Host: http://www.greens.org<enter>
+    Host: www.greens.org<enter>
     <enter>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     GET /teaching/cws/wws/webpage1.html HTTP/1.1<enter>
-    Host: http://www.york.ac.uk<enter>
+    Host: www.york.ac.uk<enter>
     <host>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
