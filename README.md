@@ -9,12 +9,29 @@ CLEAN COMMAND: `$ make clean`
 ProxyServer can forward requested files over the Internet from servers to browsers through both `telnet` and configuring your browser to utilize ProxyServer.
 
 ### Examples
-    telnet [hostname] [port-specified-in-proxy_config]<enter>
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     GET /u/amosayye/ HTTP/1.1<enter>
     Host: http://cs.rochester.edu<enter>
     <enter>
-a
-    telnet [hostname] [port-specified-in-proxy_config]<enter>
+
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    GET /about/software/editor.txt HTTP/1.1<enter>
+    Host: http://www.greens.org<enter>
+    <enter>
+
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    GET /teaching/cws/wws/webpage1.html HTTP/1.1<enter>
+    Host: http://www.york.ac.uk<enter>
+    <host>
+
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    GET /forms/index.php HTTP/1.1<enter>
+    Host: www.campustry.com<enter>
+    <enter>
+
+ProxyServer will block HTTP requests to hosts specified in the file `proxy_config`.  By default the host `stackoverflow.com` is blocked in `proxy_config`.  If we issue the request
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    <stuff>
 
 ## The Config File
 On startup, the proxy server reads a config file (specified as the only argument to `ProxyServer`) to get the port number the server should be run on and a list of websites to be blocked by the proxy server.  Comments in the config file are denoted with a '#' and extend to the end of the line on which they appear.
