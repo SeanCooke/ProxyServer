@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, threading, time
+import sys, threading, os
 from socket import *
 
 # readConfig reads the file specified in pathToFile
@@ -98,10 +98,9 @@ def headerListToHeaderDict(headerList):
 	return headerDict
 
 # parseHTTPRequestString takes a string representaiton of a HTTP request and
-# returns four values:
-# 1. The request method
-# 2. The requested hostname and file
-# 3. The first line of the HTTP request
+# returns three values:
+# 1. The requested hostname and file
+# 2. The first line of the HTTP request
 # 3. A dictionary of all HTTP request headers
 def parseHTTPRequestString(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
@@ -111,9 +110,19 @@ def parseHTTPRequestString(clientHTTPRequestString):
 	# All remaining lines of the HTTP request are headers
 	headers.remove(requestMethodLine)
 	requestMethodLineSplit = requestMethodLine.split()
-	requestMethod = requestMethodLineSplit[0]
 	requestHostFile = requestMethodLineSplit[1]
-	return requestMethod, requestHostFile, requestMethodLine, headerListToHeaderDict(headers)
+	return requestHostFile, requestMethodLine, headerListToHeaderDict(headers)
+
+# getRequestMethod takes a string representaiton of a HTTP request and
+# returns the HTTP request method for the request
+def getRequestMethod(clientHTTPRequestString):
+	# A new line can be a single "\n" or a character pair "\r\n"
+	headers = clientHTTPRequestString.splitlines()
+	# The first line is of the form '[REQUEST_METHOD] [REQUESTED_FILE] [HTTP_VERSION]'
+	requestMethodLine = headers[0]
+	requestMethodLineSplit = requestMethodLine.split()
+	requestMethod = requestMethodLineSplit[0]
+	return requestMethod
 
 # handleHTTPRequest takes the HTTP request [httpRequestString] and a python list of 
 # websites to block [websitesToBlock] and returns the HTTP response from the host
@@ -125,32 +134,32 @@ def parseHTTPRequestString(clientHTTPRequestString):
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-	requestMethod, requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
-	host = httpRequestHeaders['Host']
+	requestMethod = getRequestMethod(httpRequestString)
 	# if the request method is QUIT, shut down the server
-	if (requestMethod == 'QUIT'):
-		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP 200 OK</h1>Your \'QUIT\' request has shut down ProxyServer.</body></html>'
-		httpResponseSentString = 'No request sent to server. QUIT request issued.'
-	elif (requestMethod not in  supportedHTTPMethods):
-		ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-		proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
-		httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
-	elif (host in websitesToBlock):
-# 		proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
-# 		httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
-		proxyHTTPResponse = 'HTTP/1.1 200 OK\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 200 OK</title></head><body><h1>HTTP 200 OK</h1>Your \'QUIT\' request has shut down ProxyServer.</body></html>'
-		httpResponseSentString = 'No request sent to server. QUIT request issued.'
+	if requestMethod == 'QUIT':
+		print 'No request sent to server. QUIT request issued.'
+		os._exit(1)
 	else:
-		# open TCP connection with [host] on port 80
-		clientSocket = socket(AF_INET, SOCK_STREAM)
-		clientSocket.connect((host, 80))
-		# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
-		closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
-		clientSocket.send(closedHTTPRequest)
-		# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
-		proxyHTTPResponse = clientSocket.recv(1024)
-		clientSocket.close()
-		httpResponseSentString = 'Sent '+requestHostFile
+		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
+		host = httpRequestHeaders['Host']
+		if (requestMethod not in  supportedHTTPMethods):
+			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
+			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
+			httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
+		elif (host in websitesToBlock):
+			proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
+			httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
+		else:
+			# open TCP connection with [host] on port 80
+			clientSocket = socket(AF_INET, SOCK_STREAM)
+			clientSocket.connect((host, 80))
+			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
+			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
+			clientSocket.send(closedHTTPRequest)
+			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]  
+			proxyHTTPResponse = clientSocket.recv(1024)
+			clientSocket.close()
+			httpResponseSentString = 'Sent '+requestHostFile
 	return httpResponseSentString, proxyHTTPResponse
 
 # A requestThread object is a 3-tuple comprised
