@@ -62,7 +62,11 @@ def preventPersistantConnections(requestMethodLine, httpRequestHeaders):
 # returns: '<ul><li>GET</li><li>POST</li></ul>'
 #
 # input arguments:
-# pythonList - 
+# 1. pythonList - a python list
+#
+# return values:
+# htmlUL+</ul> - a string containing html that represents
+#			     the python list as an unordered list
 def listToHTMLul(pythonList):
 	htmlUL = '<ul>'
 	for pythonListElement in pythonList:
@@ -76,6 +80,13 @@ def listToHTMLul(pythonList):
 # myList = ['GET'] returns 'GET'
 # myList = ['GET', 'POST'] returns 'GET and POST'
 # myList = ['GET', 'POST', 'HEAD'] returns 'GET, POST, and HEAD'
+#
+# input arguments:
+# pythonList - a python list
+#
+# return values:
+# spokenList.rstrip() - a string representing the way you would
+#			   			write the items in the python list
 def listToSpokenList(pythonList):
 	pythonListIndex = 0
 	pythonListLastElementIndex = len(pythonList)-1
@@ -98,6 +109,15 @@ def listToSpokenList(pythonList):
 #
 # i.e. headerListToHeaderDict(['Host: www.campustry.com', 'Connection: keep-alive'])
 # returns {'Host': 'www.campustry.com', 'Connection': 'keep-alive'}
+#
+# input arguments:
+# headerList - a list where each element is a name/value pair separated by a
+#			   colon
+#
+# return values:
+# headerDict - a dictionary where each key is what was before the first colon
+#			   in headerList and each value is what was after the first colon
+#			   in headerList
 def headerListToHeaderDict(headerList):
 	headerDict = dict()
 	for headerListElement in headerList:
@@ -115,10 +135,17 @@ def headerListToHeaderDict(headerList):
 	return headerDict
 
 # parseHTTPRequestString takes a string representaiton of a HTTP request and
-# returns three values:
-# 1. The requested hostname and file
-# 2. The first line of the HTTP request
-# 3. A dictionary of all HTTP request headers
+# returns the requested hostname and file, the first line of the HTTP request
+# and a dictionary of all HTTP request headers
+#
+# input arguments:
+# clientHTTPRequestString - a string representing a complete HTTP request
+#
+# return values:
+# 1. requestHostFile - a string representing the file requested in
+#					   clientHTTPRequestString
+# 2. requestMethodLine - a string representing the first line of the HTTP
+#						 request (i.e. 'GET /index.html HTTP/1.1')			 
 def parseHTTPRequestString(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
 	headers = clientHTTPRequestString.splitlines()
@@ -132,6 +159,12 @@ def parseHTTPRequestString(clientHTTPRequestString):
 
 # getRequestMethod takes a string representaiton of a HTTP request and
 # returns the HTTP request method for the request
+#
+# input arguments:
+# clientHTTPRequestString - a string representing a complete HTTP request
+#
+# return values:
+# requestMethod - a string representing the request method request in the HTTP request
 def getRequestMethod(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
 	headers = clientHTTPRequestString.splitlines()
@@ -148,6 +181,15 @@ def getRequestMethod(clientHTTPRequestString):
 # A HTTP 400 Bad Request error occurs if an unsupported method request occurs
 # A HTTP 403 Forbidden error occurs if the host specified in [httpRequestString].
 # is in [websitesToBlock]
+#
+# input arguments:
+# httpRequestString - a string representing a complete HTTP request
+# websitesToBlock - a list where each value is the hostname of a website to block
+#
+# return values:
+# httpResponseSentString - a string to display on the ProxyServer terminal detailing
+#						   what was sent (or not sent) to the client
+# proxyHTTPResponse - the HTTP response from the requested server
 def handleHTTPRequest(httpRequestString, websitesToBlock):
 	supportedHTTPMethods = ['GET']
 	ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
@@ -193,6 +235,10 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 # accept a HTTP request from a client and run
 # handleHTTPRequest(clientHTTPRequestString, self.websitesToBlock)
 class requestThread (threading.Thread):
+	# input arguments:
+	# 1. connectionSocket - a file descriptor of a socket
+	# 2. addr - the port number on which the TCP connection socket is running
+	# 3. websitesToBlock - a list containing all values specified as 'block' from pathToFile
 	def __init__(self, connectionSocket, addr, websitesToBlock):
 		threading.Thread.__init__(self)
 		self.connectionSocket = connectionSocket
