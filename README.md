@@ -13,7 +13,7 @@ ProxyServer can forward requested files over the Internet from servers to browse
     GET /u/amosayye/ HTTP/1.1<enter>
     Host: http://cs.rochester.edu<enter>
     <enter>
-
+a
     telnet [hostname] [port-specified-in-proxy_config]<enter>
 
 ## The Config File
