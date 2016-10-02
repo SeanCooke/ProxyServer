@@ -1,5 +1,7 @@
 # ProxyServer
 
+[Read me on GitHub!](https://github.com/SeanCooke/ProxyServer)
+
 ## Commands
 BUILD COMMAND: `$ make all`
 RUN COMMAND: `$ ./ProxyServer proxy_config`
