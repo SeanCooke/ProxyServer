@@ -78,7 +78,7 @@ A website can be blocked on this proxy server by including the line `block y` in
 ## Concurrent Connections
 Multiple simultaneous service requests in parallel are handled with multithreading.  In ProxyServer, the server listens at a fixed port on the main thread.  When a TCP connection request is recieved, a new thread is spawned and the request is handled in the new thread.
 
-Concurrent connections can be tested by using `$ telnet` to connect to ProxyServer from one terminal window and before issuing a request, `$ telnet` to ProxyServer from a second terminal window.  Complete a request on the second terminal window then complete your request on the first terminal window then complete your request in the first terminal window as seen below:
+Concurrent connections can be tested by using `$ telnet` to connect to ProxyServer from one terminal window and before issuing a request, `$ telnet` to ProxyServer from a second terminal window.  Complete a request on the second terminal window then complete a request on the first terminal window as seen below:
 
     TERMINAL ONE
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
