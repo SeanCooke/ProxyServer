@@ -6,7 +6,7 @@ RUN COMMAND: `$ ./ProxyServer proxy_config`
 CLEAN COMMAND: `$ make clean`
 
 ## Testing
-ProxyServer can forward requested files over the Internet from servers to browsers through both `telnet` and configuring your browser to utilize ProxyServer.
+ProxyServer can forward requested files over the Internet from servers to browsers through both `$ telnet` and configuring your browser to utilize ProxyServer.
 
 ### Examples
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
@@ -47,6 +47,20 @@ ProxyServer only supports the HTTP GET request method over HTTP.  If we try to i
 
 We will recieve a HTTP 400 Bad Request response.
 
+ProxyServer only supports the HTTP protocol.  If we try to issue anything other than a HTTP request such as:
+
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    CONNECT www.google.com:443 HTTP/1.1<enter>
+    <enter>
+
+We will recieve a HTTP 400 Bad Request response.
+
+The client may shut down ProxyServer by issuing a `QUIT` request as seen below:
+
+    $ telnet [hostname] [port-specified-in-proxy_config]<enter>
+    QUIT<enter>
+    <enter>
+
 To prevent persistant connections, ProxyServer adds the header `Connection: close` to all HTTP requests.
 
 ## The Config File
@@ -58,6 +72,8 @@ A website can be blocked on this proxy server by including the line `block y` in
 
 ## Concurrent Connections
 Multiple simultaneous service requests in parallel are handled with multithreading.  In ProxyServer, the server listens at a fixed port on the main thread.  When a TCP connection request is recieved, a new thread is spawned and the request is handled in the new thread.
+
+Concurrent connections can be tested by using `$ telnet` to connect to ProxyServer from one terminal window and before issuing a request, `$ telnet` to ProxyServer from a second terminal window, complete a request then complete your request in the first terminal window.
 
 ## References
 * Base server code modified from chapter 2.7.2 of __Computer Networking: A Top-Down Approach (7th Edition)__ by Kurose and Ross.
