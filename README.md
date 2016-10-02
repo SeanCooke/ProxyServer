@@ -53,6 +53,7 @@ ProxyServer only supports the HTTP protocol.  If we try to issue anything other 
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     CONNECT www.google.com:443 HTTP/1.1<enter>
+    Host: www.google.com<enter>
     <enter>
 
 We will recieve a HTTP 400 Bad Request response.
