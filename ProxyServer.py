@@ -203,10 +203,10 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		host = httpRequestHeaders['Host']
 		if (requestMethod not in  supportedHTTPMethods):
 			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
-			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
+			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: close\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
 			httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
 		elif (host in websitesToBlock):
-			proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: Closed\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
+			proxyHTTPResponse = 'HTTP/1.1 403 Forbidden\nConnection: close\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 403 Forbidden</title></head><body><h1>HTTP/1.1 403 Forbidden</h1><p>Your HTTP '+requestMethod+' request could not be handled.  The host \''+host+'\' has been blocked.</body></html>'
 			httpResponseSentString = 'No request sent to server. Host \''+host+'\' is blocked.'
 		else:
 			# open TCP connection with [host] on port 80
