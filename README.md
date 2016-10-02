@@ -69,7 +69,7 @@ The client may shut down ProxyServer by issuing a `QUIT` request as seen below:
 To prevent persistant connections, ProxyServer adds the header `Connection: close` to all HTTP requests.
 
 ## The Config File
-On startup, the proxy server reads a config file (specified as the only argument to `ProxyServer`) to get the port number the server should be run on and a list of websites to be blocked by the proxy server.  Comments in the config file are denoted with a '#' and extend to the end of the line on which they appear.
+On startup, the proxy server reads a config file (specified as the only argument to `ProxyServer`) to get the port number the server should be run on and a list of websites to be blocked by the proxy server.  Comments in the config file are denoted with a `#` and extend to the end of the line on which they appear.
 
 A port number can be  specified in the config file by including the line `port x` where `x` is the desired port number.  The last port number read will be used.  Exclusion of this line will use the default HTTP port of 80.
 
