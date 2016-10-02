@@ -10,6 +10,8 @@ CLEAN COMMAND: `$ make clean`
 ## Testing
 ProxyServer can forward requested files over the Internet from servers to browsers through both `$ telnet` and configuring your browser to utilize ProxyServer.
 
+All requests to ProxyServer __must__ include the header `Host: [host]`.
+
 ### Examples
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     GET /u/amosayye/ HTTP/1.1<enter>
