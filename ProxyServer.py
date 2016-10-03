@@ -264,8 +264,10 @@ def headerListToHeaderDict(headerList):
 # return values:
 # 1. requestHostFile - a string representing the file requested in
 #					   clientHTTPRequestString
-# 2. requestMethodLine - a string representing the first line of the HTTP
-#						 request (i.e. 'GET /index.html HTTP/1.1')			 
+# 2. requestMethodLine - a string representing the HTTP version specified
+#						 in the HTTP request (i.e. 'HTTP/1.1')
+# 3. headerListToHeaderDict(headers) - a dictionary containing name/value
+#									   pairs for all HTTP request headers
 def parseHTTPRequestString(clientHTTPRequestString):
 	# A new line can be a single "\n" or a character pair "\r\n"
 	headers = clientHTTPRequestString.splitlines()
@@ -275,7 +277,8 @@ def parseHTTPRequestString(clientHTTPRequestString):
 	headers.remove(requestMethodLine)
 	requestMethodLineSplit = requestMethodLine.split()
 	requestHostFile = requestMethodLineSplit[1]
-	return requestHostFile, requestMethodLine, headerListToHeaderDict(headers)
+	httpVersion = requestMethodLineSplit[2]
+	return requestHostFile, httpVersion, headerListToHeaderDict(headers)
 
 # getRequestMethod takes a string representaiton of a HTTP request and
 # returns the HTTP request method for the request
@@ -319,9 +322,9 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		print 'Shutting down ProxyServer...'
 		os._exit(1)
 	else:
-		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
+		requestHostFile, httpVersion, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 		protocol, host, portNumber, fileRequested = parseRequestHostFile(requestHostFile)
-		httpRequestHeaders['Host'] = host
+
 		if (requestMethod not in supportedHTTPMethods or protocol not in ['http', '']):
 			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: close\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
@@ -333,8 +336,11 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 			# open TCP connection with [host] on port 80
 			clientSocket = socket(AF_INET, SOCK_STREAM)
 			clientSocket.connect((host, portNumber))
+			requestMethodLine = requestMethod+' '+fileRequested+' '+httpVersion
+			# explicitly setting the HTTP header 'Host' to be the host obtained from the client's request string.
+			# This will be used when forwarding the request to the "real" server.
+			httpRequestHeaders['Host'] = host
 			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
-			requestMethodLine = requestMethod+' '+fileRequested+' HTTP/1.1'
 			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
 			clientSocket.send(closedHTTPRequest)
 			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]
