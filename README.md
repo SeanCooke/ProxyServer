@@ -10,34 +10,27 @@ CLEAN COMMAND: `$ make clean`
 ## Testing
 ProxyServer can forward requested files over the Internet from servers to browsers through both `$ telnet` and configuring your browser to utilize ProxyServer.
 
-All requests to ProxyServer __must__ include the header `Host: [host]`.
-
 ### Examples
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET /u/amosayye/ HTTP/1.1<enter>
-    Host: cs.rochester.edu<enter>
+    GET cs.rochester.edu/u/amosayye/ HTTP/1.1<enter>
     <enter>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET /about/software/editor.txt HTTP/1.1<enter>
-    Host: www.greens.org<enter>
+    GET www.greens.org/about/software/editor.txt HTTP/1.1<enter>
     <enter>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET /teaching/cws/wws/webpage1.html HTTP/1.1<enter>
-    Host: www.york.ac.uk<enter>
+    GET www.york.ac.uk/teaching/cws/wws/webpage1.html HTTP/1.1<enter>
     <host>
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET /forms/index.php HTTP/1.1<enter>
-    Host: www.campustry.com<enter>
+    GET www.campustry.com/forms/index.php HTTP/1.1<enter>
     <enter>
 
 ProxyServer will block HTTP requests to hosts specified in the file `proxy_config`.  By default the host `stackoverflow.com` is blocked in `proxy_config`.  If we issue the request
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET / HTTP/1.1<enter>
-    Host: stackoverflow.com<enter>
+    GET stackoverflow.com HTTP/1.1<enter>
     <enter>
 
 We will recieve a HTTP 403 Forbidden response.
@@ -45,8 +38,7 @@ We will recieve a HTTP 403 Forbidden response.
 ProxyServer only supports the HTTP GET request method over HTTP.  If we try to issue anything other than a GET request such as:
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    POST /forms/index.php HTTP/1.1<enter>
-    Host: www.campustry.com<enter>
+    POST www.campustry.com/forms/index.php HTTP/1.1<enter>
     <enter>
 
 We will recieve a HTTP 400 Bad Request response.
@@ -55,7 +47,6 @@ ProxyServer only supports the HTTP protocol.  If we try to issue anything other 
 
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
     CONNECT www.google.com:443 HTTP/1.1<enter>
-    Host: www.google.com<enter>
     <enter>
 
 We will recieve a HTTP 400 Bad Request response.
@@ -85,13 +76,11 @@ Concurrent connections can be tested by using `$ telnet` to connect to ProxyServ
     
     TERMINAL TWO
     $ telnet [hostname] [port-specified-in-proxy_config]<enter>
-    GET /u/amosayye/ HTTP/1.1<enter>
-    Host: cs.rochester.edu<enter>
+    GET cs.rochester.edu/u/amosayye/ HTTP/1.1<enter>
     <enter>
     
     TERMINAL ONE
-    GET /about/software/editor.txt HTTP/1.1<enter>
-    Host: www.greens.org<enter>
+    GET www.greens.org/about/software/editor.txt HTTP/1.1<enter>
     <enter>
 
 ## References
