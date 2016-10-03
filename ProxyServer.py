@@ -54,6 +54,126 @@ def preventPersistantConnections(requestMethodLine, httpRequestHeaders):
 		 httpRequest+='\n'+key+': '+value
 	return httpRequest+'\n\n'
 
+# concatenateList takes a python list as a parameter and returns
+# the elements of the list between [startIndex] and [endIndex]
+# inclusive with [concatCharacter]
+#
+# input arguments:
+# pythonList - a list of elements we wish to concatenate
+# startIndex - an integer representing the first element of
+#              [pythonList] to include in the concatenation
+# endIndex - an integer representing the last element of [pythonList]
+#            to include in the concatenation
+# concatCharacter - the character to concatenate all elements between
+#                   pythonList[startIndex] and pythonList[endIndex] with
+#
+# return values:
+# returnString - a string representing all elements between pythonList[startIndex]
+#                and pythonList[endIndex] with [concatCharacter] between them
+def concatenateList(pythonList, startIndex, endIndex, concatCharacter):
+	returnString = ''
+	for index in range(startIndex, endIndex):
+		returnString = returnString + pythonList[index] + concatCharacter
+	returnString = returnString[:-1]
+	return returnString
+
+# getPortNumberFromHostname will extract a port number
+# from a string containing either a hostname and port number
+# or a string containing solely a hostname.  If a port number
+# is not specified, a default port number from [protocol] will
+# be used.
+#
+# input arguments:
+# protocol - a string representing the protocol used
+# hostPortNumber - a string representing the hostname (and possibly
+# port number) used
+#
+# return values:
+# host - a string representing the hostname to which the request
+#        is being made
+# portNumber - an integer representing the port number to which
+#              the request is being made
+def getPortNumberFromHostname(protocol, hostPortNumber):
+	portDeliminiter = ':'
+	# if there is a colon in hostPortNumber, that is
+	# the port number.  Otherwise a default port number
+	# will be used.
+	if portDeliminiter in hostPortNumber:
+		hostPortNumberSplit = hostPortNumber.split(portDeliminiter)
+		try:
+			host = hostPortNumberSplit[0]
+		except IndexError:
+			host = ''
+		try:
+			portNumber = int(hostPortNumberSplit[1])
+		except IndexError:
+			portNumber = 80
+	else:
+		host = hostPortNumber
+		if(protocol.lower() == 'http' or protocol.lower() == ''):
+			portNumber = 80
+		elif(protocol.lower() == 'https'):
+			portNumber = 443
+	return host, portNumber
+
+# parseRequestHostFile takes a string representing
+# the protocol, host, and file requested to a proxy
+# server and returns the protocol, hostname, port number
+# and file requeted.  If no port number is specified and
+# protocol is 'http', port will be 80.  If no port number
+# is specified and protocol is 'https', port will be 443.
+#
+# input arguments:
+# requestHostFile - a string representing the protocol,
+# host, and file requested to a proxy server.
+#
+# return values:
+# protocol - a string representing the protol requested
+#			 in requestHostFile.
+# host - a string representing the the host requested in
+#        requestHostFile.
+# portNumber - an integer representing the port number
+#              requested in requestHostFile.  If no port
+#              number is specified and protocol is 'http',
+#              port will be 80.  If no port number is specified
+#              and protocol is 'https', port will be 443.
+# fileRequested - a string representing the file requested
+#                 in requestHostFile.
+def parseRequestHostFile(requestHostFile):
+	protocolDelimiter = '://'
+	# if a protocol is specified in the HTTP request
+	if (protocolDelimiter in requestHostFile):
+		slashOffset = 2
+		requestHostFileSplit = requestHostFile.split(protocolDelimiter)
+		try:
+			protocol = requestHostFileSplit[0].lower()
+		except IndexError:
+			protocol = ''
+		requestHostFileSplit = requestHostFile.split('/')
+		try:
+			hostPortNumber = requestHostFileSplit[2]
+			host, portNumber = getPortNumberFromHostname(protocol, hostPortNumber)
+		except IndexError:
+			hostPortNumber = ''
+		try:
+			fileRequested = '/'+concatenateList(requestHostFileSplit, 3, len(requestHostFileSplit), '/')
+		except IndexError:
+			fileRequested = '/'
+	# if no protocol is specified in the HTTP request
+	else:
+		protocol = ''
+		requestHostFileSplit = requestHostFile.split('/', 1)
+		try:
+			hostPortNumber = requestHostFileSplit[0]
+			host, portNumber = getPortNumberFromHostname(protocol, hostPortNumber)
+		except IndexError:
+			hostPortNumber = ''
+		try:
+			fileRequested = '/'+concatenateList(requestHostFileSplit, 1, len(requestHostFileSplit), '/')
+		except IndexError:
+			fileRequested = '/'
+	return protocol, host, portNumber, fileRequested
+
 # listToHTMLul takes a list [pythonList] as a parameter
 # and returns the string representation of [pythonList]
 # as an unordered HTML list.
@@ -200,8 +320,9 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		os._exit(1)
 	else:
 		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
-		host = httpRequestHeaders['Host']
-		if (requestMethod not in  supportedHTTPMethods):
+		protocol, host, portNumber, fileRequested = parseRequestHostFile(requestHostFile)
+		print 'protocol: '+protocol
+		if (requestMethod not in supportedHTTPMethods or protocol not in ['http', '']):
 			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: close\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
 			httpResponseSentString = 'No request sent to server. Request method other than '+listToSpokenList(supportedHTTPMethods)+' requested.'
@@ -211,7 +332,7 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		else:
 			# open TCP connection with [host] on port 80
 			clientSocket = socket(AF_INET, SOCK_STREAM)
-			clientSocket.connect((host, 80))
+			clientSocket.connect((host, portNumber))
 			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
 			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
 			clientSocket.send(closedHTTPRequest)
