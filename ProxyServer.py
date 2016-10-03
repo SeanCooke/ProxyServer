@@ -322,7 +322,6 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 		protocol, host, portNumber, fileRequested = parseRequestHostFile(requestHostFile)
 		httpRequestHeaders['Host'] = host
-		print 'protocol: '+protocol
 		if (requestMethod not in supportedHTTPMethods or protocol not in ['http', '']):
 			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
 			proxyHTTPResponse = 'HTTP/1.1 400 Bad Request\nConnection: close\n\n<!DOCTYPE html><html><head><title>HTTP/1.1 400 Bad Request</title></head><body><h1>HTTP/1.1 400 Bad Request</h1><p>Your HTTP '+requestMethod+' request could not be handled.  ProxyServer only supports the following HTTP request methods:</p>'+ulSupportedHTTPRequestMethods+'</body></html>'
@@ -337,9 +336,6 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
 			requestMethodLine = requestMethod+' '+fileRequested+' HTTP/1.1'
 			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
-			print '*****'
-			print closedHTTPRequest
-			print '*****'
 			clientSocket.send(closedHTTPRequest)
 			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]
 			proxyHTTPResponse = ''
