@@ -1,7 +1,7 @@
 # proxy_config --- sample HTTP proxy configuration file
 #
 # This clause defines the port where proxy should listen on
-port 8927
+port 8928
 
 # A list of blocked URLS goes here
 block stackoverflow.com
