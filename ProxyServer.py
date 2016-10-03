@@ -321,6 +321,7 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 	else:
 		requestHostFile, requestMethodLine, httpRequestHeaders = parseHTTPRequestString(httpRequestString)
 		protocol, host, portNumber, fileRequested = parseRequestHostFile(requestHostFile)
+		httpRequestHeaders['Host'] = host
 		print 'protocol: '+protocol
 		if (requestMethod not in supportedHTTPMethods or protocol not in ['http', '']):
 			ulSupportedHTTPRequestMethods = listToHTMLul(supportedHTTPMethods)
@@ -334,7 +335,11 @@ def handleHTTPRequest(httpRequestString, websitesToBlock):
 			clientSocket = socket(AF_INET, SOCK_STREAM)
 			clientSocket.connect((host, portNumber))
 			# sending the [httpRequestString] that was sent to the proxy to [host] with the header 'Connection: close'
+			requestMethodLine = requestMethod+' '+fileRequested+' HTTP/1.1'
 			closedHTTPRequest = preventPersistantConnections(requestMethodLine, httpRequestHeaders)
+			print '*****'
+			print closedHTTPRequest
+			print '*****'
 			clientSocket.send(closedHTTPRequest)
 			# receiving [httpRequestString] response form [host] in [proxyHTTPResponse]
 			proxyHTTPResponse = ''
